@@ -121,6 +121,17 @@
   th:first-child, td:first-child { text-align: left; }
   th { color: var(--text-muted); font-weight: 600; font-size: 12px; }
   tr.total td { font-weight: 700; border-top: 2px solid var(--baseline); }
+  .detail-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  #detailSearch {
+    background: var(--page); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 12px; color: var(--text-primary); font: 13px system-ui, -apple-system, "Segoe UI", sans-serif;
+    width: min(280px, 100%);
+  }
+  #detailSearch:focus { outline: 2px solid var(--c-ecom); outline-offset: 1px; }
+  button.chip { cursor: pointer; font-family: inherit; }
+  .chip.active { border-color: var(--c-ecom); color: var(--c-ecom); font-weight: 600; }
+  #detailTable td:first-child { max-width: 480px; }
+  #detailTable td.num, #detailTable td.period { white-space: nowrap; }
   .foot { font-size: 12px; color: var(--text-muted); margin-top: 20px; }
   .legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
 </style>
@@ -237,6 +248,18 @@
           <li>UGC carousel video playback investigation</li>
         </ul>
       </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>ECOM support: all task entries</h2>
+    <div class="desc">Every ECOM-support task logged in Harvest in the past year: 81 tasks across 156 logged entries, 109.4 hours in total. Type to filter, or click a group.</div>
+    <div class="detail-controls">
+      <input id="detailSearch" type="search" placeholder="Filter tasks...">
+      <div id="groupChips" class="chips"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="detailTable"></table>
     </div>
   </div>
 
@@ -411,7 +434,138 @@ function render() {
   ];
 }
 
+// [task note, hours, logged entries, first date, last date, group]
+const ECOM_DETAIL = [
+["[Documentation] Duplicate Page Info", 10.18, 13, "2026-04-06", "2026-04-16", "Documentation"],
+["product setup documentation", 9.06, 11, "2026-05-20", "2026-06-01", "Documentation"],
+["Shopify Markets Documentation", 5.8, 6, "2026-01-15", "2026-01-20", "Documentation"],
+["product setup documentation - Apps", 5.79, 6, "2026-06-01", "2026-06-03", "Documentation"],
+["[Documentation] Duplicate Page Info - Contact Us page", 5.66, 8, "2026-04-20", "2026-04-22", "Documentation"],
+["Tiktok orders investigation", 4.96, 3, "2025-12-15", "2025-12-16", "Investigations"],
+["CMS Guide for Product Restructure", 3.85, 3, "2026-07-06", "2026-07-06", "Documentation"],
+["Investigating Sue llama upsell campaigns", 3.25, 3, "2026-03-13", "2026-03-16", "Investigations"],
+["GWP tout on the offers page isn't translating", 2.91, 3, "2026-05-13", "2026-05-14", "Translations"],
+["Merge Products list from ECOM Product Master spreadsheet", 2.9, 5, "2026-08-11", "2026-08-13", "Products & prices"],
+["[Test Store] Shopify Price Updates - U.S., CAN, UK, AUS", 2.61, 2, "2026-02-19", "2026-02-19", "Products & prices"],
+["Investigating and reporting - Accounts Dropdown Issue", 2.4, 4, "2025-11-18", "2025-11-18", "Investigations"],
+["First upload for testing [SD-250] Shopify Price Updates - FR, ES, IT", 2.31, 6, "2026-02-25", "2026-02-27", "Products & prices"],
+["DMI-3649 - Fix translated product names", 2.3, 5, "2026-07-16", "2026-07-22", "Translations"],
+["Wishlist Investigation - CTA redirection", 2.19, 2, "2025-11-10", "2025-11-12", "Investigations"],
+["Documenting and fixing Checkout issue (shopstatus.shopifyapps.com)", 2.06, 2, "2026-02-20", "2026-02-21", "Investigations"],
+["Collapse Collection Touts Investigation", 1.57, 2, "2026-04-24", "2026-04-24", "Investigations"],
+["eCom details regarding ADA assets and new design for DMI-1849", 1.56, 1, "2025-11-06", "2025-11-06", "Other support"],
+["Llama Upsells QA & feedback", 1.43, 1, "2025-10-23", "2025-10-23", "Investigations"],
+["Llama App issues gathering and report", 1.42, 2, "2026-02-09", "2026-02-10", "Investigations"],
+["260729: OLA – 1.15.0 Release Documentation", 1.41, 2, "2026-07-28", "2026-07-29", "Documentation"],
+["Shipping Issues - Troubleshoot", 1.36, 1, "2026-03-02", "2026-03-02", "Investigations"],
+["[Sue] Translate across markets <> Adapt a market issues with merged product variants", 1.35, 1, "2026-07-28", "2026-07-28", "Translations"],
+["1.13.0 Release steps + documentation SDLC with Gefrey", 1.32, 1, "2026-05-26", "2026-05-26", "Documentation"],
+["Duplicated Pages", 1.17, 1, "2026-04-17", "2026-04-17", "Documentation"],
+["Sue [Documentation] Duplicate Page Info - Privacy Page", 1.1, 2, "2026-04-22", "2026-04-22", "Documentation"],
+["Pages - Metafields clean up", 1.07, 1, "2026-06-16", "2026-06-16", "Other support"],
+["Translate across markets <> Adapt a market issues with merged product variants", 1.05, 1, "2026-07-27", "2026-07-27", "Translations"],
+["Checkout issue investigation (shopstatus.shopifyapps.com)", 0.96, 1, "2026-02-20", "2026-02-20", "Investigations"],
+["[Live updates for 2 themes] DMI-3002 - Remove market modal translations for IT/FR/ES", 0.95, 1, "2026-02-24", "2026-02-24", "Translations"],
+["Washcare - Investigate mini cart issue reported by Jon", 0.93, 1, "2026-06-05", "2026-06-05", "Investigations"],
+["DMI-3811 - Product Merge - Recharge Subscription Issue", 0.85, 1, "2026-08-17", "2026-08-17", "Products & prices"],
+["Investigate Thank you Page", 0.84, 1, "2026-07-22", "2026-07-22", "Investigations"],
+["Contact Llama team and fix theme with updated mini cart version", 0.8, 2, "2026-05-13", "2026-05-14", "Investigations"],
+["Builder setup and Nicole chat", 0.78, 1, "2026-08-04", "2026-08-04", "Other support"],
+["Investigating possibility of blocking users", 0.77, 1, "2026-02-18", "2026-02-18", "Investigations"],
+["Investigating Recharge Widget under Mini cart", 0.76, 2, "2025-10-29", "2025-10-30", "Investigations"],
+["Investigating build issues", 0.75, 1, "2025-11-04", "2025-11-04", "Investigations"],
+["[Documentation] OLA – 1.15.0 Release Documentation", 0.75, 2, "2026-07-23", "2026-07-27", "Documentation"],
+["[Call] Duplicate Page Info", 0.73, 1, "2026-04-03", "2026-04-03", "Documentation"],
+["Price Import analysis", 0.72, 1, "2026-02-13", "2026-02-13", "Products & prices"],
+["[Pre import backups] [SD-250] Shopify Price Updates - FR, ES, IT", 0.68, 1, "2026-03-02", "2026-03-02", "Products & prices"],
+["Investigating and fixing translating issues with Italy version of touts (Smartling conflicting with Translate&adapt)", 0.63, 1, "2026-06-23", "2026-06-23", "Investigations"],
+["Investigating Product Admin issues with metafields", 0.62, 1, "2026-02-23", "2026-02-23", "Investigations"],
+["Grin, Honeycomb, or PreProduct Next Gen investigation", 0.62, 1, "2026-08-19", "2026-08-19", "Investigations"],
+["Metafields investigation", 0.58, 1, "2026-04-01", "2026-04-01", "Investigations"],
+["Investigating Allyant HUB Toolkit Chrome Extension", 0.56, 1, "2025-12-15", "2025-12-15", "Investigations"],
+["Checkout issues investigation", 0.56, 2, "2026-02-09", "2026-02-09", "Investigations"],
+["Product documentation - Nicole", 0.55, 1, "2026-07-13", "2026-07-13", "Documentation"],
+["Kick off: Removing Duplicative Content", 0.54, 1, "2026-04-17", "2026-04-17", "Documentation"],
+["Investigate Daily Details CTA", 0.47, 1, "2025-12-02", "2025-12-02", "Investigations"],
+["DMI-3002 - Remove market modal translations for IT/FR/ES", 0.46, 1, "2026-02-20", "2026-02-20", "Translations"],
+["Llama team ticket request - Unlisted Product Behavior", 0.45, 1, "2026-03-24", "2026-03-24", "Investigations"],
+["[Creating ticket] SD-242 - Shopify Price Updates - U.S., CAN, UK, AUS", 0.44, 1, "2026-02-19", "2026-02-19", "Products & prices"],
+["Critical CSS investigation", 0.43, 1, "2026-07-28", "2026-07-28", "Investigations"],
+["Swym Wishlist conversation about markets", 0.43, 1, "2026-07-28", "2026-07-28", "Investigations"],
+["[Rewind backup] Shopify Price Updates - U.S., CAN, UK, AUS", 0.42, 1, "2026-02-20", "2026-02-20", "Products & prices"],
+["Call with Kim", 0.4, 1, "2025-10-10", "2025-10-10", "Other support"],
+["Investigating bugs and updating tickets after Sprint 1.8.0 release", 0.4, 1, "2025-10-29", "2025-10-29", "Investigations"],
+["Investigating Llama Upsell {{difference}} mini cart issue", 0.38, 1, "2026-05-04", "2026-05-04", "Investigations"],
+["Investigating extra scroll bar for N°.3PLUS", 0.37, 1, "2026-02-24", "2026-02-24", "Investigations"],
+["Store Locator map bug investigation", 0.37, 1, "2026-07-02", "2026-07-02", "Investigations"],
+["Investigate 1.13.0 Release Documentation", 0.35, 1, "2026-05-26", "2026-05-26", "Documentation"],
+["Olaplex Minicart - Translation & ADA", 0.34, 1, "2025-10-31", "2025-10-31", "Translations"],
+["Call with Sue about translations", 0.32, 1, "2026-07-28", "2026-07-28", "Translations"],
+["[QA after updates] Shopify Price Updates - U.S., CAN, UK, AUS", 0.3, 1, "2026-02-20", "2026-02-20", "Products & prices"],
+["Shopify Price Updates - ITALY, FRANCE, SPAIN", 0.3, 1, "2026-03-02", "2026-03-02", "Products & prices"],
+["Talk with Llama team about GWP Campaigns - Unlisted Product Behavior", 0.3, 1, "2026-04-01", "2026-04-01", "Investigations"],
+["Investigating checkout issue is a Llama bug", 0.29, 1, "2025-11-19", "2025-11-19", "Investigations"],
+["Daily Deals investigation", 0.28, 2, "2025-11-06", "2025-11-07", "Investigations"],
+["Investigate Janice bug issue on Pro site for phone number on checkout", 0.28, 1, "2026-02-20", "2026-02-20", "Investigations"],
+["Investigate Daily Details - Collections", 0.23, 1, "2025-12-02", "2025-12-02", "Investigations"],
+["Creating tickets [SD-250] Shopify Price Updates - FR, ES, IT", 0.23, 1, "2026-02-27", "2026-02-27", "Products & prices"],
+["Investigating about Recommended Routine not showing on PDPs", 0.22, 1, "2026-04-29", "2026-04-29", "Investigations"],
+["Metafields Needed in Prod (OLA must to create)", 0.2, 1, "2026-05-21", "2026-05-21", "Other support"],
+["ADA Llama QA", 0.18, 1, "2025-10-20", "2025-10-20", "Investigations"],
+["Investigating Tangent ADA issues", 0.13, 1, "2025-12-03", "2025-12-03", "Investigations"],
+["Circle back with Llama regarding ADA issues", 0.13, 1, "2026-02-12", "2026-02-12", "Investigations"],
+["Investigating localization.market change", 0.13, 1, "2026-03-24", "2026-03-24", "Investigations"],
+["Helping investigating One-Page Checkout link", 0.12, 1, "2026-05-06", "2026-05-06", "Investigations"],
+["[Manual Updates + talk with Smartling] DMI-3002 - Remove market modal translations for IT/FR/ES", 0.04, 1, "2026-02-25", "2026-02-25", "Translations"]
+];
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${MONTH_NAMES[+m - 1]} ${+d}, ${y}`;
+}
+function fmtPeriod(first, last) {
+  return first === last ? fmtDate(first) : `${fmtDate(first)} to ${fmtDate(last)}`;
+}
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+let activeGroup = 'All';
+function buildGroupChips() {
+  const counts = {};
+  ECOM_DETAIL.forEach(r => { counts[r[5]] = (counts[r[5]] || 0) + r[1]; });
+  const names = ['All', ...Object.keys(counts).sort((a, b) => counts[b] - counts[a])];
+  const box = document.getElementById('groupChips');
+  box.innerHTML = names.map(n =>
+    `<button class="chip${n === activeGroup ? ' active' : ''}" data-group="${n}">${n}${n === 'All' ? '' : ` · ${counts[n].toFixed(1)}h`}</button>`
+  ).join('');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    activeGroup = b.dataset.group;
+    buildGroupChips();
+    buildDetail();
+  }));
+}
+
+function buildDetail() {
+  const q = document.getElementById('detailSearch').value.trim().toLowerCase();
+  const rows = ECOM_DETAIL.filter(r =>
+    (activeGroup === 'All' || r[5] === activeGroup) &&
+    (!q || r[0].toLowerCase().includes(q) || r[5].toLowerCase().includes(q)));
+  let html = '<tr><th>Task</th><th>Group</th><th>Period</th><th>Entries</th><th>Hours</th></tr>';
+  rows.forEach(r => {
+    html += `<tr><td>${esc(r[0])}</td><td class="period">${r[5]}</td><td class="period">${fmtPeriod(r[3], r[4])}</td>` +
+            `<td class="num">${r[2]}</td><td class="num">${r[1].toFixed(2)}</td></tr>`;
+  });
+  const th = rows.reduce((a, r) => a + r[1], 0);
+  const te = rows.reduce((a, r) => a + r[2], 0);
+  html += `<tr class="total"><td>${rows.length} task${rows.length === 1 ? '' : 's'}</td><td></td><td></td><td class="num">${te}</td><td class="num">${th.toFixed(1)}</td></tr>`;
+  document.getElementById('detailTable').innerHTML = html;
+}
+
+document.getElementById('detailSearch').addEventListener('input', buildDetail);
+
 buildTable();
+buildGroupChips();
+buildDetail();
 render();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
 </script>
