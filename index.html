@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gersen Hours Breakdown</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --deemph: #c3c2b7;
+    --c-ecom: #2a78d6;
+    --c-jira: #eb6834;
+    --c-dev: #1baf7a;
+    --c-meet: #eda100;
+    --c-marc: #e87ba4;
+    --accent-soft: rgba(42,120,214,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --deemph: #4a4a47;
+      --c-ecom: #3987e5;
+      --c-jira: #d95926;
+      --c-dev: #199e70;
+      --c-meet: #c98500;
+      --c-marc: #d55181;
+      --accent-soft: rgba(57,135,229,0.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --deemph: #4a4a47;
+    --c-ecom: #3987e5;
+    --c-jira: #d95926;
+    --c-dev: #199e70;
+    --c-meet: #c98500;
+    --c-marc: #d55181;
+    --accent-soft: rgba(57,135,229,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    line-height: 1.5;
+    padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  header .sub { color: var(--text-secondary); margin-top: 4px; font-size: 14px; }
+  .kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px; margin: 24px 0;
+  }
+  .kpi {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .kpi.hero { background: var(--accent-soft); border-color: var(--c-ecom); }
+  .kpi .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+  .kpi .value { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
+  .kpi .note { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 16px; font-weight: 600; }
+  .card .desc { font-size: 13px; color: var(--text-secondary); margin: 2px 0 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .chart-box { position: relative; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 12.5px; color: var(--text-secondary);
+    border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px;
+    background: var(--page);
+  }
+  .hl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .hl {
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+    display: flex; gap: 12px; align-items: baseline;
+  }
+  .hl .h { font-size: 20px; font-weight: 700; color: var(--c-ecom); white-space: nowrap; }
+  .hl .t { font-size: 13.5px; color: var(--text-secondary); }
+  .hl .t b { color: var(--text-primary); font-weight: 600; }
+  .slack-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .slack {
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+  }
+  .slack h3 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .slack h3 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c-ecom); display: inline-block; }
+  .slack ul { margin: 8px 0 0 0; padding-left: 18px; }
+  .slack li { font-size: 13px; color: var(--text-secondary); margin-bottom: 5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-muted); font-weight: 600; font-size: 12px; }
+  tr.total td { font-weight: 700; border-top: 2px solid var(--baseline); }
+  .foot { font-size: 12px; color: var(--text-muted); margin-top: 20px; }
+  .legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Where My Hours Go: Gersen Medina</h1>
+    <div class="sub">Past 1 year logged in the Harvest time tracking tool</div>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi hero">
+      <div class="label">ECOM Support · past year</div>
+      <div class="value">109.4h</div>
+      <div class="note">13.1% of all tracked time, on top of sprint and release work</div>
+    </div>
+    <div class="kpi">
+      <div class="label">ECOM Support · 2026 YTD</div>
+      <div class="value">92.0h</div>
+      <div class="note">Present every single month of the year</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Documentation for the team</div>
+      <div class="value">~48h</div>
+      <div class="note">Product setup guides, CMS Guide, Markets docs, duplicate pages</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Total tracked</div>
+      <div class="value">837.1h</div>
+      <div class="note">Past year of logged work</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Full period (last 12 months)</h2>
+      <div class="desc">All 837.1 tracked hours, split by type of work</div>
+      <div class="chart-box" style="height:240px"><canvas id="chartTotal"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>2026 year to date</h2>
+      <div class="desc">Jan–Aug 2026 · 602.5 tracked hours · ECOM support highlighted</div>
+      <div class="chart-box" style="height:240px"><canvas id="chart2026"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Month by month</h2>
+    <div class="desc">ECOM support (<span class="legend-swatch" style="background:var(--c-ecom)"></span>blue) shows up every month, alongside sprint and development work</div>
+    <div class="chart-box" style="height:320px"><canvas id="chartMonthly"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>What counts as ECOM support</h2>
+    <div class="desc">Harvest entries tagged with any of these markers were classified as ECOM support. Test store, metaobjects and Matrixify/Rewind work counts as Development, not ECOM (only price updates stay here), and anything referencing a Jira ticket ID without an ECOM marker went to "Jira tickets". This count is conservative.</div>
+    <div class="chips">
+      <span class="chip">Sue</span><span class="chip">Nicole</span><span class="chip">Kim</span><span class="chip">Xiomara</span>
+      <span class="chip">ECOM</span><span class="chip">documentation</span><span class="chip">price updates</span>
+      <span class="chip">metafields</span><span class="chip">CMS questions</span>
+      <span class="chip">translations / Smartling</span>
+      <span class="chip">product setup / merge</span><span class="chip">investigations</span>
+      <span class="chip">Builder</span><span class="chip">broken modules</span><span class="chip">theme clean up</span>
+      <span class="chip">launch support</span><span class="chip">help requests</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Where the ECOM hours went</h2>
+    <div class="desc">Largest groups of ECOM-support work in the period (approximate, grouped from Harvest notes)</div>
+    <div class="hl-grid">
+      <div class="hl"><span class="h">~48h</span><span class="t"><b>Documentation for the team.</b> Product setup guides, CMS Guide for the product restructure, Shopify Markets docs, duplicate page remediation docs</span></div>
+      <div class="hl"><span class="h">~36h</span><span class="t"><b>Investigations on request.</b> TikTok orders, checkout incident (shopstatus), Llama upsell issues, wishlist redirects, accounts dropdown, shipping troubleshooting</span></div>
+      <div class="hl"><span class="h">~12h</span><span class="t"><b>Products and prices.</b> Product merge lists from the ECOM Product Master, price updates across all markets</span></div>
+      <div class="hl"><span class="h">~10h</span><span class="t"><b>Translation fixes.</b> Smartling vs Translate &amp; Adapt conflicts, non-translating touts, translated product names</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Ongoing ECOM collaboration (from Slack)</h2>
+    <div class="desc">Recurring direct-support threads with the ECOM team</div>
+    <div class="slack-grid">
+      <div class="slack">
+        <h3><span class="dot"></span>Sue Pik</h3>
+        <ul>
+          <li>Product launches: translations, preview themes, metaobjects, asset coordination</li>
+          <li>Translation fixes: badges, mini cart content, non-translated strings</li>
+          <li>Offers page structure and privacy policy anchor links</li>
+          <li>Test store upkeep: product updates, theme cloning, test orders</li>
+          <li>Metaobject and campaign scheduling, import error fixes</li>
+          <li>Llama upsell and mini cart ownership</li>
+          <li>Smartling glossary strategy to protect product names</li>
+        </ul>
+      </div>
+      <div class="slack">
+        <h3><span class="dot"></span>Kim Efonye</h3>
+        <ul>
+          <li>Optimizely experiment snippet install and site-wide enablement</li>
+          <li>Search bar troubleshooting inside experiment previews</li>
+          <li>PDP and landing page scroll issue identified and fixed</li>
+          <li>Broken TikTok newsletter link reported</li>
+          <li>/collections/all traffic analysis for Marc</li>
+        </ul>
+      </div>
+      <div class="slack">
+        <h3><span class="dot"></span>Nicole Hawxhurst</h3>
+        <ul>
+          <li>Shopify app inventory and integration chart for the product merge</li>
+          <li>Jira release clarifications (ADA vs SEO scope)</li>
+          <li>XML sitemap and vendor audit documentation</li>
+          <li>Attentive pixel verification and pop-up ticket triage</li>
+          <li>Builder site access recovered after Xiomara's departure</li>
+          <li>UGC carousel video playback investigation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Monthly hours (data table)</h2>
+    <div class="desc">Same data as the charts, in hours</div>
+    <div style="overflow-x:auto">
+      <table id="dataTable"></table>
+    </div>
+  </div>
+
+  <div class="foot">
+    Source: Harvest time report, past 1 year. Classification: entries with ECOM markers (people, documentation, price updates, translations, investigations) → ECOM Support; entries with a Jira ticket ID → Jira Tickets; standups, town halls, trainings and 1:1s → Meetings &amp; Training; everything else (releases, code reviews, QA, test store, metaobjects, Matrixify/Rewind) → Development.
+  </div>
+</div>
+
+<script>
+const CATS = [
+  { key: 'ECOM',        label: 'ECOM Support',        cssVar: '--c-ecom' },
+  { key: 'Jira',        label: 'Jira Tickets',        cssVar: '--c-jira' },
+  { key: 'Development', label: 'Development',         cssVar: '--c-dev'  },
+  { key: 'Meetings',    label: 'Meetings & Training', cssVar: '--c-meet' },
+];
+const TOTALS = { ECOM: 109.4, Jira: 394.5, Development: 251.0, Meetings: 82.3 };
+const Y2026  = { ECOM: 92.0, Jira: 228.0, Development: 224.1, Meetings: 58.4 };
+const MONTHS = ['Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26','Aug 26'];
+const MONTHLY = {
+  ECOM:        [0.0, 3.5, 7.5, 6.4, 5.8, 15.6, 6.2, 22.1, 14.6, 8.9, 13.7, 5.2],
+  Jira:        [5.3, 74.3, 23.2, 63.7, 48.9, 26.1, 21.3, 17.4, 19.1, 37.9, 41.8, 15.4],
+  Development: [0.0, 9.2, 15.5, 2.1, 9.7, 41.1, 56.5, 17.1, 38.8, 16.9, 16.0, 28.0],
+  Meetings:    [0.0, 10.1, 5.1, 8.6, 6.3, 7.5, 10.6, 7.2, 6.0, 7.1, 6.5, 7.2],
+};
+
+const cssv = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+let charts = [];
+
+// Direct value labels at the end of horizontal bars
+const barLabels = {
+  id: 'barLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const data = chart.data.datasets[0].data;
+    const total = data.reduce((a, b) => a + b, 0);
+    ctx.save();
+    ctx.font = '600 12px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.fillStyle = cssv('--text-primary');
+    ctx.textBaseline = 'middle';
+    meta.data.forEach((bar, i) => {
+      const pct = (100 * data[i] / total).toFixed(1);
+      ctx.fillText(`${data[i].toFixed(1)}h · ${pct}%`, bar.x + 8, bar.y);
+    });
+    ctx.restore();
+  }
+};
+
+function tooltipStyle() {
+  return {
+    backgroundColor: cssv('--surface-1'),
+    titleColor: cssv('--text-primary'),
+    bodyColor: cssv('--text-secondary'),
+    borderColor: cssv('--baseline'),
+    borderWidth: 1,
+    padding: 10,
+    cornerRadius: 6,
+    boxPadding: 4,
+  };
+}
+
+function hBarChart(canvasId, values, { emphasis = false } = {}) {
+  const order = [...CATS].sort((a, b) => values[b.key] - values[a.key]);
+  const colors = order.map(c =>
+    emphasis && c.key !== 'ECOM' ? cssv('--deemph') : cssv(c.cssVar));
+  return new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels: order.map(c => c.label),
+      datasets: [{
+        data: order.map(c => values[c.key]),
+        backgroundColor: colors,
+        borderRadius: 4,
+        borderSkipped: 'start',
+        barThickness: 22,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { right: 92 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipStyle(), callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)} hours` } },
+      },
+      scales: {
+        x: {
+          grid: { color: cssv('--grid') },
+          border: { color: cssv('--baseline') },
+          ticks: { color: cssv('--text-muted'), font: { size: 11 } },
+        },
+        y: {
+          grid: { display: false },
+          border: { color: cssv('--baseline') },
+          ticks: { color: cssv('--text-secondary'), font: { size: 12.5 } },
+        }
+      }
+    },
+    plugins: [barLabels]
+  });
+}
+
+function monthlyChart() {
+  return new Chart(document.getElementById('chartMonthly'), {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: CATS.map(c => ({
+        label: c.label,
+        data: MONTHLY[c.key],
+        backgroundColor: cssv(c.cssVar),
+        borderColor: cssv('--surface-1'),
+        borderWidth: 1.5,
+        stack: 'h',
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: cssv('--text-secondary'), boxWidth: 10, boxHeight: 10, font: { size: 12 } }
+        },
+        tooltip: { ...tooltipStyle(), callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}h` } },
+      },
+      scales: {
+        x: {
+          stacked: true, grid: { display: false },
+          border: { color: cssv('--baseline') },
+          ticks: { color: cssv('--text-muted'), font: { size: 11 } },
+        },
+        y: {
+          stacked: true, grid: { color: cssv('--grid') },
+          border: { display: false },
+          ticks: { color: cssv('--text-muted'), font: { size: 11 }, callback: v => v + 'h' },
+        }
+      }
+    }
+  });
+}
+
+function buildTable() {
+  const t = document.getElementById('dataTable');
+  let html = '<tr><th>Month</th>' + CATS.map(c => `<th>${c.label}</th>`).join('') + '<th>Total</th></tr>';
+  MONTHS.forEach((m, i) => {
+    const row = CATS.map(c => MONTHLY[c.key][i]);
+    const sum = row.reduce((a, b) => a + b, 0);
+    html += `<tr><td>${m}</td>` + row.map(v => `<td>${v.toFixed(1)}</td>`).join('') + `<td>${sum.toFixed(1)}</td></tr>`;
+  });
+  const totals = CATS.map(c => TOTALS[c.key]);
+  html += '<tr class="total"><td>Total</td>' + totals.map(v => `<td>${v.toFixed(1)}</td>`).join('') +
+          `<td>${totals.reduce((a, b) => a + b, 0).toFixed(1)}</td></tr>`;
+  t.innerHTML = html;
+}
+
+function render() {
+  charts.forEach(c => c.destroy());
+  charts = [
+    hBarChart('chartTotal', TOTALS),
+    hBarChart('chart2026', Y2026, { emphasis: true }),
+    monthlyChart(),
+  ];
+}
+
+buildTable();
+render();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+</script>
+</body>
+</html>
