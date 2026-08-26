@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The ADA Project: Gersen Medina</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --deemph: #c3c2b7;
+    --c-ecom: #2a78d6;
+    --c-jira: #eb6834;
+    --c-dev: #1baf7a;
+    --c-meet: #eda100;
+    --c-marc: #e87ba4;
+    --c-ada: #7c5cd6;
+    --accent-soft: rgba(124,92,214,0.08);
+    --domaine-soft: rgba(232,123,164,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --deemph: #4a4a47;
+      --c-ecom: #3987e5;
+      --c-jira: #d95926;
+      --c-dev: #199e70;
+      --c-meet: #c98500;
+      --c-marc: #d55181;
+      --c-ada: #9678e8;
+      --accent-soft: rgba(150,120,232,0.12);
+      --domaine-soft: rgba(213,81,129,0.14);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --deemph: #4a4a47;
+    --c-ecom: #3987e5;
+    --c-jira: #d95926;
+    --c-dev: #199e70;
+    --c-meet: #c98500;
+    --c-marc: #d55181;
+    --c-ada: #9678e8;
+    --accent-soft: rgba(150,120,232,0.12);
+    --domaine-soft: rgba(213,81,129,0.14);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    line-height: 1.5;
+    padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  header .sub { color: var(--text-secondary); margin-top: 4px; font-size: 14px; }
+  .kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px; margin: 24px 0;
+  }
+  .kpi {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .kpi.hero { background: var(--accent-soft); border-color: var(--c-ada); }
+  .kpi.domaine { background: var(--domaine-soft); border-color: var(--c-marc); }
+  .kpi .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+  .kpi .value { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
+  .kpi .note { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 16px;
+  }
+  .card.domaine { border-color: var(--c-marc); }
+  .card h2 { font-size: 16px; font-weight: 600; }
+  .card .desc { font-size: 13px; color: var(--text-secondary); margin: 2px 0 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .chart-box { position: relative; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 12.5px; color: var(--text-secondary);
+    border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px;
+    background: var(--page);
+  }
+  .hl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .hl {
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+    display: flex; gap: 12px; align-items: baseline;
+  }
+  .hl .h { font-size: 20px; font-weight: 700; color: var(--c-ada); white-space: nowrap; }
+  .hl.domaine { border-color: var(--c-marc); background: var(--domaine-soft); }
+  .hl.domaine .h { color: var(--c-marc); }
+  .hl .t { font-size: 13.5px; color: var(--text-secondary); }
+  .hl .t b { color: var(--text-primary); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-muted); font-weight: 600; font-size: 12px; }
+  tr.total td { font-weight: 700; border-top: 2px solid var(--baseline); }
+  .detail-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  #detailSearch {
+    background: var(--page); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 12px; color: var(--text-primary); font: 13px system-ui, -apple-system, "Segoe UI", sans-serif;
+    width: min(280px, 100%);
+  }
+  #detailSearch:focus { outline: 2px solid var(--c-ada); outline-offset: 1px; }
+  button.chip { cursor: pointer; font-family: inherit; }
+  .chip.active { border-color: var(--c-ada); color: var(--c-ada); font-weight: 600; }
+  #detailTable td:first-child { max-width: 480px; }
+  #detailTable td.num, #detailTable td.period { white-space: nowrap; }
+  .foot { font-size: 12px; color: var(--text-muted); margin-top: 20px; }
+  .legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>The ADA Project: Gersen Medina</h1>
+    <div class="sub">All accessibility work logged in the Harvest time tracking tool, Jan 2025 to Aug 2026</div>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi hero">
+      <div class="label">ADA work · full project</div>
+      <div class="value">280.3h</div>
+      <div class="note">Main push from Jul 2025 to May 2026, all handled in house</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Jira tickets remediated</div>
+      <div class="value">135</div>
+      <div class="note">~217h of hands-on fixes across the whole theme</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Tooling &amp; automation</div>
+      <div class="value">22.2h</div>
+      <div class="note">Automated ADA detector for new blog articles, so issues are caught before they ship</div>
+    </div>
+    <div class="kpi domaine">
+      <div class="label">Domaine tickets without ADA</div>
+      <div class="value">5.3h</div>
+      <div class="note">Working through Domaine sprint tickets that arrived without ADA coverage</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Full project</h2>
+      <div class="desc">All 280.3 ADA hours, split by type of work</div>
+      <div class="chart-box" style="height:240px"><canvas id="chartTotal"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>2026 year to date</h2>
+      <div class="desc">Jan–Aug 2026 · 68.8 ADA hours · the tail of the project plus ongoing automation</div>
+      <div class="chart-box" style="height:240px"><canvas id="chart2026"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Month by month</h2>
+    <div class="desc">Ticket fixes (<span class="legend-swatch" style="background:var(--c-ada)"></span>purple) carried the project from Aug 2025 through May 2026, with tooling and automation taking over as the fixes wound down</div>
+    <div class="chart-box" style="height:320px"><canvas id="chartMonthly"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>What counts as ADA work</h2>
+    <div class="desc">Harvest entries mentioning ADA or an accessibility topic, plus every entry logged against a Jira ticket from the ADA remediation batches. The count is conservative: general development that merely touched accessible markup is not included.</div>
+    <div class="chips">
+      <span class="chip">screen reader labels</span><span class="chip">ARIA attributes</span><span class="chip">alt text</span>
+      <span class="chip">color contrast</span><span class="chip">keyboard navigation</span><span class="chip">focus indicators</span>
+      <span class="chip">reading order</span><span class="chip">nav landmarks</span><span class="chip">alert messages</span>
+      <span class="chip">WCAG</span><span class="chip">Allyant audit</span><span class="chip">accessible modals</span>
+      <span class="chip">ticket evaluation</span><span class="chip">ADA QA</span><span class="chip">ADA code reviews</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Where the ADA hours went</h2>
+    <div class="desc">The project end to end: evaluating the audit, fixing every ticket, verifying releases and building tooling so the site stays compliant</div>
+    <div class="hl-grid">
+      <div class="hl"><span class="h">216.6h</span><span class="t"><b>Ticket fixes.</b> 135 ADA Jira tickets remediated: screen reader labels, ARIA, alt text, color contrast, keyboard navigation, reading order, focus management</span></div>
+      <div class="hl"><span class="h">22.2h</span><span class="t"><b>Tooling and automation.</b> Automated ADA detector for new blog articles with email reports (N8N), AI accessibility checks for public pages, Allyant HUB toolkit</span></div>
+      <div class="hl"><span class="h">17.1h</span><span class="t"><b>Evaluation and planning.</b> Audit ticket triage, estimates, sprint organization for the P1 and P2 batches</span></div>
+      <div class="hl"><span class="h">19.1h</span><span class="t"><b>QA and code reviews.</b> Release verification after each ADA sprint plus reviews of ADA branches</span></div>
+    </div>
+  </div>
+
+  <div class="card domaine">
+    <h2>Highlight: Domaine tickets without ADA</h2>
+    <div class="desc">Sprint tickets from the Domaine agency that arrived without ADA coverage, picked up and worked through in house</div>
+    <div class="hl-grid">
+      <div class="hl domaine"><span class="h">5.3h</span><span class="t"><b>Domaine Tickets Without ADA.</b> Two work sessions on Nov 3, 2025, logged under Development</span></div>
+      <div class="hl"><span class="h">13.8h</span><span class="t"><b>Domaine coordination, for context.</b> Demos, co-dev onboarding, documentation written for their team and theme access tokens. Counted outside the 280.3 ADA hours</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>ADA work: all task entries</h2>
+    <div class="desc">Every ADA task logged in Harvest: 188 tasks across 389 logged entries, 280.3 hours in total. Type to filter, or click a group.</div>
+    <div class="detail-controls">
+      <input id="detailSearch" type="search" placeholder="Filter tasks...">
+      <div id="groupChips" class="chips"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="detailTable"></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Monthly hours (data table)</h2>
+    <div class="desc">Same data as the charts, in hours</div>
+    <div style="overflow-x:auto">
+      <table id="dataTable"></table>
+    </div>
+  </div>
+
+  <div class="foot">
+    Source: Harvest time report, Jan 1, 2025 to Aug 24, 2026. Classification: entries mentioning ADA or accessibility topics (screen readers, ARIA, WCAG, contrast, keyboard, Allyant), plus every entry logged against a Jira ticket ID from the ADA remediation batches. A 0.3h Tangent investigation from Feb 2025 is included in the totals but predates the monthly chart window. The companion report of all tracked hours keeps its own 12 month window, so the two are not meant to add up.
+  </div>
+</div>
+
+<script>
+const CATS = [
+  { key: 'Fixes',   label: 'Ticket fixes',          cssVar: '--c-ada'  },
+  { key: 'Tooling', label: 'Tooling & automation',  cssVar: '--c-dev'  },
+  { key: 'Eval',    label: 'Evaluation & planning', cssVar: '--c-ecom' },
+  { key: 'QA',      label: 'QA & release checks',   cssVar: '--c-meet' },
+  { key: 'Reviews', label: 'Code reviews',          cssVar: '--c-jira' },
+  { key: 'Domaine', label: 'Domaine without ADA',   cssVar: '--c-marc' },
+];
+const TOTALS = { Fixes: 216.6, Tooling: 22.2, Eval: 17.1, QA: 11.0, Reviews: 8.1, Domaine: 5.3 };
+const Y2026  = { Fixes: 53.2, Tooling: 11.9, Eval: 0.5, QA: 1.8, Reviews: 1.4, Domaine: 0.0 };
+const MONTHS = ['Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26','Aug 26'];
+const MONTHLY = {
+  Fixes:   [0.0, 37.1, 30.0, 36.4, 17.9, 42.0, 25.1, 6.2, 2.4, 7.2, 12.4, 0.0, 0.0, 0.0],
+  Tooling: [0.0, 0.0, 0.0, 0.0, 2.4, 7.6, 1.4, 5.5, 1.5, 0.6, 2.0, 0.6, 0.3, 0.0],
+  Eval:    [9.0, 1.8, 1.3, 0.0, 3.4, 1.2, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0],
+  QA:      [0.0, 0.9, 1.2, 5.9, 1.1, 0.0, 0.0, 0.9, 0.0, 0.7, 0.0, 0.2, 0.0, 0.0],
+  Reviews: [0.0, 3.0, 1.9, 0.6, 1.3, 0.0, 0.0, 0.7, 0.1, 0.0, 0.0, 0.0, 0.0, 0.6],
+  Domaine: [0.0, 0.0, 0.0, 0.0, 5.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+};
+
+const cssv = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+let charts = [];
+
+// Direct value labels at the end of horizontal bars
+const barLabels = {
+  id: 'barLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const data = chart.data.datasets[0].data;
+    const total = data.reduce((a, b) => a + b, 0);
+    ctx.save();
+    ctx.font = '600 12px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.fillStyle = cssv('--text-primary');
+    ctx.textBaseline = 'middle';
+    meta.data.forEach((bar, i) => {
+      const pct = (100 * data[i] / total).toFixed(1);
+      ctx.fillText(`${data[i].toFixed(1)}h · ${pct}%`, bar.x + 8, bar.y);
+    });
+    ctx.restore();
+  }
+};
+
+function tooltipStyle() {
+  return {
+    backgroundColor: cssv('--surface-1'),
+    titleColor: cssv('--text-primary'),
+    bodyColor: cssv('--text-secondary'),
+    borderColor: cssv('--baseline'),
+    borderWidth: 1,
+    padding: 10,
+    cornerRadius: 6,
+    boxPadding: 4,
+  };
+}
+
+function hBarChart(canvasId, values) {
+  const order = [...CATS].sort((a, b) => values[b.key] - values[a.key]);
+  return new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels: order.map(c => c.label),
+      datasets: [{
+        data: order.map(c => values[c.key]),
+        backgroundColor: order.map(c => cssv(c.cssVar)),
+        borderRadius: 4,
+        borderSkipped: 'start',
+        barThickness: 22,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { right: 92 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipStyle(), callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)} hours` } },
+      },
+      scales: {
+        x: {
+          grid: { color: cssv('--grid') },
+          border: { color: cssv('--baseline') },
+          ticks: { color: cssv('--text-muted'), font: { size: 11 } },
+        },
+        y: {
+          grid: { display: false },
+          border: { color: cssv('--baseline') },
+          ticks: { color: cssv('--text-secondary'), font: { size: 12.5 } },
+        }
+      }
+    },
+    plugins: [barLabels]
+  });
+}
+
+function monthlyChart() {
+  return new Chart(document.getElementById('chartMonthly'), {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: CATS.map(c => ({
+        label: c.label,
+        data: MONTHLY[c.key],
+        backgroundColor: cssv(c.cssVar),
+        borderColor: cssv('--surface-1'),
+        borderWidth: 1.5,
+        stack: 'h',
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: cssv('--text-secondary'), boxWidth: 10, boxHeight: 10, font: { size: 12 } }
+        },
+        tooltip: { ...tooltipStyle(), callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}h` } },
+      },
+      scales: {
+        x: {
+          stacked: true, grid: { display: false },
+          border: { color: cssv('--baseline') },
+          ticks: { color: cssv('--text-muted'), font: { size: 11 } },
+        },
+        y: {
+          stacked: true, grid: { color: cssv('--grid') },
+          border: { display: false },
+          ticks: { color: cssv('--text-muted'), font: { size: 11 }, callback: v => v + 'h' },
+        }
+      }
+    }
+  });
+}
+
+function buildTable() {
+  const t = document.getElementById('dataTable');
+  let html = '<tr><th>Month</th>' + CATS.map(c => `<th>${c.label}</th>`).join('') + '<th>Total</th></tr>';
+  MONTHS.forEach((m, i) => {
+    const row = CATS.map(c => MONTHLY[c.key][i]);
+    const sum = row.reduce((a, b) => a + b, 0);
+    html += `<tr><td>${m}</td>` + row.map(v => `<td>${v.toFixed(1)}</td>`).join('') + `<td>${sum.toFixed(1)}</td></tr>`;
+  });
+  const totals = CATS.map(c => TOTALS[c.key]);
+  html += '<tr class="total"><td>Total</td>' + totals.map(v => `<td>${v.toFixed(1)}</td>`).join('') +
+          `<td>${totals.reduce((a, b) => a + b, 0).toFixed(1)}</td></tr>`;
+  t.innerHTML = html;
+}
+
+function render() {
+  charts.forEach(c => c.destroy());
+  charts = [
+    hBarChart('chartTotal', TOTALS),
+    hBarChart('chart2026', Y2026),
+    monthlyChart(),
+  ];
+}
+
+// [task note, hours, logged entries, first date, last date, group]
+const ADA_DETAIL = [
+["DMI-1156 - 24: This third-party component may contain content that is not fully accessible for all users.", 16.53, 14, "2025-10-16", "2025-12-10", "Ticket fixes"],
+["ADA tickets evaluating", 9.31, 10, "2025-07-24", "2025-08-11", "Evaluation & planning"],
+["DMI-1118 - 55: When content is marked up as a checkbox, but is not semantically a checkbox, it can be confusing for screen reader users.", 6.92, 7, "2025-10-08", "2025-10-28", "Ticket fixes"],
+["DMI-3079 - Audit and update the new No3 plus landing page to be ADA compliant", 6.42, 7, "2026-03-19", "2026-05-18", "Ticket fixes"],
+["Gemini GEM build + DMI-2308 - #254: Images that lack alt attributes make it impossible for screen reader users to know what the image depicts.", 6.27, 10, "2025-11-24", "2025-12-08", "Tooling & automation"],
+["DMI-2317 - #242: This element receives focus in an illogical order for screen reader and keyboard users.", 5.58, 6, "2025-12-01", "2025-12-04", "Ticket fixes"],
+["DMI-1119 - 54: This third-party component may contain content that is not fully accessible for all users.", 5.38, 8, "2025-08-13", "2025-08-28", "Ticket fixes"],
+["Domaine Tickets Without ADA", 5.32, 2, "2025-11-03", "2025-11-03", "Domaine without ADA"],
+["DMI-1155 - 23: When content is marked up as a <summary>/<details>, but is not semantically a <summary>/<details>, it can be confusing for screen reader users.", 5.3, 4, "2025-12-16", "2025-12-23", "Ticket fixes"],
+["ADA P2 Issues 2025 QA", 5.25, 4, "2025-10-27", "2025-10-28", "QA & release checks"],
+["DMI-1849 - FU - 5: Carousels that lack controls are inaccessible to some users", 5.23, 3, "2025-12-23", "2025-12-31", "Ticket fixes"],
+["DMI-1081 - 124: It is not clear to screen reader users where the carousel begins or ends.", 4.93, 7, "2025-08-28", "2025-09-17", "Ticket fixes"],
+["DMI-2322 - #249: There are multiple separate and adjacent links to the same location, creating an unnecessary amount of work for keyboard users.", 4.7, 4, "2025-12-29", "2025-12-30", "Ticket fixes"],
+["DMI-1137 - 231: Keyboard users are able to focus on elements outside of this modal dialog while it is open.", 4.45, 5, "2025-10-06", "2025-10-07", "Ticket fixes"],
+["DMI-2758 - FU - 126: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 4.17, 3, "2026-01-23", "2026-01-26", "Ticket fixes"],
+["GEM Creating - DMI-1239 - 29: There are multiple separate and adjacent links to the same location, creating an unnecessary amount of work for keyboard users.", 4.16, 3, "2026-02-04", "2026-02-04", "Tooling & automation"],
+["DMI-2455 - Tangent ADA fixes for Hair Quiz", 4.1, 7, "2025-12-22", "2026-01-05", "Tooling & automation"],
+["DMI-1128 - 61: The meaning of this number is not clear to screen reader users.", 4.09, 6, "2025-09-22", "2025-10-22", "Ticket fixes"],
+["DMI-1083 - 121: When content is marked up as a checkbox, but is not semantically a checkbox, it can be confusing for screen reader users.", 3.69, 2, "2025-10-22", "2025-10-22", "Ticket fixes"],
+["DMI-1079 - 106: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 3.47, 4, "2025-09-02", "2025-09-04", "Ticket fixes"],
+["DMI-1075 - 98: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 3.46, 4, "2025-09-01", "2025-09-04", "Ticket fixes"],
+["DMI-3217 - #272: Additional content is only revealed on hover, which is inaccessible to screen reader and keyboard users.", 3.41, 4, "2026-04-27", "2026-04-29", "Ticket fixes"],
+["DMI-1204 - 105: Text within images causes problems for screen reader users and users who require high contrast or screen magnification, but it appears that you have taken steps to mitigate this fact.", 3.38, 5, "2026-02-06", "2026-02-09", "Ticket fixes"],
+["DMI-1068 - 32: Images that lack alt attributes make it impossible for screen reader users to know what the image depicts.", 3.36, 3, "2025-08-05", "2025-08-08", "Ticket fixes"],
+["DMI-1846 - FU - 126: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 3.24, 3, "2025-10-14", "2025-10-27", "Ticket fixes"],
+["DMI-1089 - 109: This image zoom and/or pan feature is not accessible to keyboard-only or screen reader users.", 3.15, 6, "2025-10-06", "2025-10-14", "Ticket fixes"],
+["DMI-3219 - #284: The language of this content is different from the primary language of the document, but this is not indicated to screen reader users.", 3.14, 3, "2026-04-27", "2026-05-28", "Ticket fixes"],
+["DMI-1178 - 171: Errors are not identified to screen reader users.", 2.62, 1, "2025-08-26", "2025-08-26", "Ticket fixes"],
+["DMI-1140 - 188: Decorative SVG elements should be hidden from screen reader users.", 2.6, 5, "2025-09-18", "2025-10-01", "Ticket fixes"],
+["DMI-1131 - 239: Content that does not programmatically follow a logical reading order can be confusing and difficult for screen reader users to understand.", 2.59, 3, "2025-08-22", "2025-09-04", "Ticket fixes"],
+["DMI-2279 - FU - 61: The meaning of this number is not clear to screen reader users.", 2.4, 5, "2025-11-10", "2025-11-14", "Ticket fixes"],
+["DMI-1065 - 100: These are buttons, but they are not marked up as such; screen readers will not identify them as actionable and they will not be usable by keyboard users.", 2.3, 2, "2025-08-06", "2025-08-11", "Ticket fixes"],
+["DMI-1205 - 97: It may not be clear to screen reader users how to interact with this carousel.", 2.26, 3, "2025-12-19", "2025-12-23", "Ticket fixes"],
+["DMI-1180 - 161: Alert messages must be conveyed to screen reader users.", 2.2, 3, "2025-08-21", "2025-08-22", "Ticket fixes"],
+["DMI-1170 - 27: When content is marked up as a carousel, but is not currently functioning as a carousel, it can be confusing for screen reader users.¬†", 2.19, 3, "2026-02-17", "2026-03-09", "Ticket fixes"],
+["DMI-2315 - #246: The meaning of this number is not clear to screen reader users.", 2.12, 2, "2025-12-22", "2025-12-23", "Ticket fixes"],
+["DMI-1107 - 47: Focus indicators must meet the minimum color contrast required by the WCAG. The combination of blue (#0038FF) and black (#1B1B1B - representative sample) only has a contrast ratio of 2.46:1.", 2.05, 4, "2025-10-01", "2025-10-01", "Ticket fixes"],
+["Code feedback [DMI-1198-1200-1221-1224-1226-1227] Carousel ADA - Remove unnecessary ARIA attribute", 2.02, 1, "2026-01-30", "2026-01-30", "Ticket fixes"],
+["DMI-1219 - 139: It may not be clear to screen reader users how to interact with this carousel.", 1.99, 2, "2026-01-29", "2026-01-30", "Ticket fixes"],
+["DMI-1138 - 190: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 1.95, 2, "2025-08-25", "2025-09-26", "Ticket fixes"],
+["[Bug after code review + Fix] DMI-1057 - 177: Image links must be properly labeled for screen reader users.", 1.93, 1, "2025-08-07", "2025-08-07", "Code reviews"],
+["DMI-1216 - 119: Content that functions as a list should be indicated as such to screen reader users.", 1.89, 1, "2026-01-30", "2026-01-30", "Ticket fixes"],
+["DMI-1226 - 144: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 1.81, 3, "2026-01-13", "2026-01-14", "Ticket fixes"],
+["DMI-1064 - 52: Image links must be properly labeled for screen reader users.", 1.8, 1, "2025-08-04", "2025-08-04", "Ticket fixes"],
+["DMI-1099 - 126: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 1.75, 2, "2025-08-27", "2025-08-27", "Ticket fixes"],
+["DMI-1188 - 179: Screen reader users are unable to quickly determine how many cards or tiles are in this set.", 1.75, 1, "2026-01-28", "2026-01-28", "Ticket fixes"],
+["[DMI-1233-1236] ADA form with required form fields", 1.71, 1, "2026-01-20", "2026-01-20", "Ticket fixes"],
+["1.9.0 ADA tickets estimation", 1.7, 2, "2025-11-05", "2025-11-06", "Evaluation & planning"],
+["DMI-3216 - #10: Image links must be properly labeled for screen reader users.", 1.69, 2, "2026-04-28", "2026-04-28", "Ticket fixes"],
+["DMI-1849 Investigation and DMI-2323 - #245: When content is marked up as a list, but is not semantically a list, it can be confusing for screen reader users.", 1.67, 1, "2026-01-02", "2026-01-02", "Ticket fixes"],
+["DMI-3223 - #261: This color combination does not meet the minimum color contrast required by the WCAG. The combination of gray (#999999) and off-white (#F6F4F2) only has a contrast ratio of 2.59:1", 1.65, 3, "2026-05-14", "2026-05-29", "Ticket fixes"],
+["eCom details regarding ADA assets and new design for DMI-1849", 1.56, 1, "2025-11-06", "2025-11-06", "Ticket fixes"],
+["DMI-2314 - #247: It is not clear to screen reader users where each card or tile begins and ends.", 1.56, 1, "2025-11-24", "2025-11-24", "Ticket fixes"],
+["DMI-1847 - FU - 98: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 1.53, 2, "2025-10-14", "2025-10-27", "Ticket fixes"],
+["[Code feedback] DMI-2318 - #241: Elements that control expandable content must be indicated to screen reader users.", 1.5, 2, "2025-12-22", "2025-12-22", "Ticket fixes"],
+["ADA - Remove some P3 items from sprint 1.9.0", 1.46, 2, "2025-11-12", "2025-11-12", "Evaluation & planning"],
+["DMI-1221 - 128: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 1.42, 3, "2026-01-14", "2026-01-15", "Ticket fixes"],
+["DMI-1074 - 99: Screen readers are unable to determine which slide dot or thumbnail image button is currently active.", 1.39, 1, "2025-09-01", "2025-09-01", "Ticket fixes"],
+["DMI-2274 - FU 75: It is not clear to screen reader users where each card or tile begins and ends.", 1.38, 3, "2025-11-07", "2025-12-04", "Ticket fixes"],
+["Update ADA 1.8.0 branches with Develop", 1.37, 2, "2025-10-20", "2025-10-20", "Ticket fixes"],
+["DMI-1190 - 176: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 1.37, 4, "2026-01-05", "2026-01-28", "Ticket fixes"],
+["Improving Algolia Integrating keyboard navigation", 1.36, 1, "2025-11-12", "2025-11-12", "Ticket fixes"],
+["DMI-1084 - 3: Some regions require additional ARIA markup to assist screen reader users in understanding what a section is for, and where it begins and ends.", 1.35, 1, "2025-08-26", "2025-08-26", "Ticket fixes"],
+["DMI-3227 - #273: The breadcrumb links are not properly identified as such for screen reader users.", 1.35, 3, "2026-05-11", "2026-05-11", "Ticket fixes"],
+["[Using ADA GEM] New Blog articles publish", 1.34, 3, "2026-02-25", "2026-02-25", "Tooling & automation"],
+["DMI-2277-2318] Code review", 1.27, 3, "2025-11-13", "2025-11-14", "Code reviews"],
+["Organizing 1.8.0 ADA sprint tickets", 1.26, 1, "2025-09-29", "2025-09-29", "Evaluation & planning"],
+["DMI-1223 - 125: It may not be clear to screen reader users how to interact with this carousel.", 1.24, 3, "2025-12-18", "2025-12-19", "Ticket fixes"],
+["ADA - 9 tickets - Steps to Preview and PR", 1.21, 1, "2025-12-17", "2025-12-17", "Evaluation & planning"],
+["DMI-1057 - 177: Image links must be properly labeled for screen reader users.", 1.19, 3, "2025-08-04", "2025-08-05", "Ticket fixes"],
+["DMI-1823 - FU - 171: Errors are not identified to screen reader users.", 1.19, 2, "2025-09-30", "2025-09-30", "Ticket fixes"],
+["QA on ADA tickets after Theme Sprint 1.7.0 release", 1.17, 1, "2025-09-24", "2025-09-24", "QA & release checks"],
+["DMI-1067 - 51: Elements that function as links must be marked up as such so that screen reader users will identify them as actionable and they will be usable by keyboard users.", 1.16, 1, "2025-08-05", "2025-08-05", "Ticket fixes"],
+["[QA for ADA tickets] Release 1.8.1", 1.15, 1, "2025-11-05", "2025-11-05", "QA & release checks"],
+["DMI-1200 - 45: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 1.15, 3, "2026-01-13", "2026-01-13", "Ticket fixes"],
+["Implement automation to detect when blog article is published with ADA issues", 1.15, 1, "2026-05-20", "2026-05-20", "Tooling & automation"],
+["ADA - Update branchs", 1.14, 1, "2025-08-07", "2025-08-07", "Ticket fixes"],
+["DMI-1070 - 135: Images that have empty alt attributes are not visible to screen reader users.", 1.1, 3, "2025-08-05", "2025-08-11", "Ticket fixes"],
+["DMI-1230 - 9: When content is marked up as a heading, but is not semantically a heading, it can be confusing for screen reader users.", 1.09, 3, "2025-12-16", "2025-12-17", "Ticket fixes"],
+["DMI-1239 - 29: There are multiple separate and adjacent links to the same location, creating an unnecessary amount of work for keyboard users.", 1.09, 1, "2026-02-06", "2026-02-06", "Ticket fixes"],
+["DMI-1187 - 39: This element receives focus in an illogical order for screen reader and keyboard users.", 1.08, 1, "2025-12-17", "2025-12-17", "Ticket fixes"],
+["DMI-1210 - 91: It may not be clear to screen reader users how to interact with this carousel.", 1.08, 1, "2025-12-18", "2025-12-18", "Ticket fixes"],
+["DMI-3224 - #133: This color combination does not meet the minimum color contrast required by the WCAG. The combination of light gray (#B8B8B8) and white (#FFFFFF) only has a contrast ratio of 1.98:1.", 1.06, 2, "2026-05-11", "2026-05-11", "Ticket fixes"],
+["ADA code review", 1.05, 4, "2025-08-07", "2025-08-11", "Code reviews"],
+["Update ADA pull requests with latests code changes and fixing conflicts", 1.03, 1, "2025-09-10", "2025-09-10", "Ticket fixes"],
+["[DMI-1118] [DMI-1089] [DMI-1135] Code conflicts and update with develop", 1.03, 1, "2025-10-14", "2025-10-14", "Ticket fixes"],
+["DMI-2277 - FU - 126: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 0.99, 1, "2025-11-04", "2025-11-04", "Ticket fixes"],
+["DMI-2311 - #257: When content is marked up as a <label>, but it's redundant, it can be confusing for screen reader users.", 0.99, 1, "2025-12-03", "2025-12-03", "Ticket fixes"],
+["P1 ADA QA after release 1.6", 0.93, 1, "2025-08-19", "2025-08-19", "QA & release checks"],
+["DMI-1096 - 129: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.93, 1, "2025-08-25", "2025-08-25", "Ticket fixes"],
+["DMI-1101 - 82: This color combination does not meet the minimum color contrast required by the WCAG. The combination of light gray (#9CA3AF) and white (#FFFFFF) only has a contrast ratio of 2.53:1.", 0.93, 1, "2025-09-11", "2025-09-11", "Ticket fixes"],
+["DMI-1075 - 106: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.92, 1, "2025-09-04", "2025-09-04", "Ticket fixes"],
+["DMI-3226 - #269: Accessible names of elements should properly match the visible labels.", 0.92, 4, "2026-04-23", "2026-05-29", "Ticket fixes"],
+["DMI-1822 - FU - 172: When a status message is present, it must be indicated to screen reader users.", 0.91, 1, "2025-09-30", "2025-09-30", "Ticket fixes"],
+["DMI-1042 - P2 ADA - Organizing", 0.9, 1, "2025-08-21", "2025-08-21", "Evaluation & planning"],
+["DMI-1045 - 136: Image buttons must be properly labeled for screen reader users.", 0.87, 2, "2025-08-06", "2025-08-11", "Ticket fixes"],
+["GEM ADA Blog Posts: The Accessibility Architect for html content", 0.87, 1, "2026-03-11", "2026-03-11", "Tooling & automation"],
+["DMI-1072 - 102: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.85, 1, "2025-09-01", "2025-09-01", "Ticket fixes"],
+["Updating automation to submit a email report with ADA for blog articles", 0.85, 1, "2026-05-29", "2026-05-29", "Tooling & automation"],
+["[Code review] DMI-1129 - 92: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 0.84, 2, "2025-09-10", "2025-09-11", "Code reviews"],
+["DMI-1173 - 157: Form fields that are required must be programmatically indicated to screen reader users.", 0.84, 1, "2025-08-26", "2025-08-26", "Ticket fixes"],
+["DMI-1826 - FU - 53: This third-party component may contain content that is not fully accessible for all users.", 0.84, 1, "2025-10-07", "2025-10-07", "Ticket fixes"],
+["DMI-1103 - 80: Content that does not programmatically follow a logical reading order can be confusing and difficult for screen reader users to understand.", 0.83, 2, "2025-11-04", "2025-11-04", "Ticket fixes"],
+["DMI-2755 - FU 23: When content is marked up as a <summary>/<details>, but is not semantically a <summary>/<details>, it can be confusing for screen reader users.", 0.8, 1, "2026-01-23", "2026-01-23", "Ticket fixes"],
+["DMI-1058 - 10: Image links must be properly labeled for screen reader users.", 0.78, 2, "2025-08-01", "2025-08-04", "Ticket fixes"],
+["DMI-2777 - FU - 61: The meaning of this number is not clear to screen reader users.", 0.78, 2, "2026-01-29", "2026-01-29", "Ticket fixes"],
+["DMI-1117 - 56: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.73, 1, "2025-08-25", "2025-08-25", "Ticket fixes"],
+["DMI-1165 - 132: Decorative SVG elements should be hidden from screen reader users.", 0.73, 3, "2025-09-18", "2025-10-01", "Ticket fixes"],
+["[DMI-3226-3225-2800] QA and feedback for Llama ADA tickets", 0.72, 1, "2026-04-30", "2026-04-30", "QA & release checks"],
+["DMI-1154 - 233: Keyboard users are able to focus on elements outside of this modal dialog while it is open.", 0.7, 1, "2025-10-07", "2025-10-07", "Ticket fixes"],
+["DMI-1189 - 37: It may not be clear to screen reader users how to interact with this carousel.", 0.69, 1, "2025-12-17", "2025-12-17", "Ticket fixes"],
+["DMI-2757 - FU  #248: The primary image, and secondary image which is revealed on hover only, are inaccessible to screen reader users.", 0.68, 1, "2026-01-23", "2026-01-23", "Ticket fixes"],
+["Dev Review ADA Tickets", 0.67, 1, "2025-11-25", "2025-11-25", "Ticket fixes"],
+["[Code Review] - FU 27: When content is marked up as a carousel, but is not currently functioning as a carousel, it can be confusing for screen reader users.¬†", 0.66, 1, "2026-02-27", "2026-02-27", "Code reviews"],
+["DMI-1174 - 154: Alert messages must be conveyed to screen reader users.", 0.65, 1, "2025-08-22", "2025-08-22", "Ticket fixes"],
+["Pre-Release ADA QA + Tickets status", 0.64, 1, "2026-02-10", "2026-02-10", "QA & release checks"],
+["Updating N8N automation to submit a email report with ADA for blog articles", 0.64, 1, "2026-06-10", "2026-06-10", "Tooling & automation"],
+["ecom [UAT and code review] [Tangent] Hair Quiz Updates - 8/11/26", 0.64, 1, "2026-08-24", "2026-08-24", "Code reviews"],
+["DMI-1133 - 183: Focus indicators must meet the minimum color contrast required by the WCAG. The combination of amber (#E59700) and white (#FFFFFF) only has a contrast ratio of 2.39:1.", 0.62, 2, "2025-08-12", "2025-08-12", "Ticket fixes"],
+["DMI-1203 - 74: <figure> tags are used excessively and unnecessarily on this page, causing a great deal of extra noise for screen reader users.", 0.61, 1, "2025-11-10", "2025-11-10", "Ticket fixes"],
+["DMI-1224 - 123: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.61, 2, "2026-01-14", "2026-01-14", "Ticket fixes"],
+["DMI-1095 - 14: Decorative SVG elements should be hidden from screen reader users.", 0.6, 1, "2025-09-18", "2025-09-18", "Ticket fixes"],
+["ADA Gemini Gems training", 0.6, 1, "2026-03-11", "2026-03-11", "Tooling & automation"],
+["DMI-1228 - 141: This element receives focus in an illogical order for screen reader and keyboard users.", 0.59, 1, "2026-01-21", "2026-01-21", "Ticket fixes"],
+["ADA - AI detector for public pages", 0.59, 1, "2026-04-17", "2026-04-17", "Tooling & automation"],
+["[DMI-1824-1127-1827-1844] Header elements ADA", 0.58, 1, "2025-10-01", "2025-10-01", "Ticket fixes"],
+["ADA Sync", 0.57, 1, "2025-07-29", "2025-07-29", "Evaluation & planning"],
+["DMI-3025 - FU - 61: The meaning of this number is not clear to screen reader users.", 0.57, 1, "2026-03-04", "2026-03-04", "Ticket fixes"],
+["Investigating Allyant HUB Toolkit Chrome Extension", 0.56, 1, "2025-12-15", "2025-12-15", "Tooling & automation"],
+["DMI-1235 - 153: Decorative SVG elements should be hidden from screen reader users.", 0.55, 2, "2025-12-16", "2025-12-16", "Ticket fixes"],
+["DMI-1163 - Unnecessary ARIA attributes", 0.54, 1, "2025-08-25", "2025-08-25", "Ticket fixes"],
+["DMI-1181 - 159: Form fields that are required must be programmatically indicated to screen reader users.", 0.52, 1, "2025-08-26", "2025-08-26", "Ticket fixes"],
+["DMI-1175 - 178: It is not clear to screen reader users where each card or tile begins and ends.", 0.52, 1, "2025-08-26", "2025-08-26", "Ticket fixes"],
+["QA Llama implementation + feedback - [DMI-1843] FU - 70: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 0.51, 2, "2025-10-31", "2025-10-31", "QA & release checks"],
+["DMI-1824 - FU - 239: Content that does not programmatically follow a logical reading order can be confusing and difficult for screen reader users to understand.", 0.5, 2, "2025-09-29", "2025-09-29", "Ticket fixes"],
+["DMI-1098 - 11: This content requires a <nav> tag to assist screen reader users in understanding and navigating the structure of the page.", 0.49, 2, "2025-08-18", "2025-08-18", "Ticket fixes"],
+["[Code conflicts] DMI-1131 - 239: Content that does not programmatically follow a logical reading order can be confusing and difficult for screen reader users to understand.", 0.48, 3, "2025-09-04", "2025-09-04", "Ticket fixes"],
+["DMI-1153 - 130: Decorative SVG elements should be hidden from screen reader users.", 0.46, 2, "2025-09-18", "2025-10-01", "Ticket fixes"],
+["Allyant's audit - Tickets estimating", 0.46, 1, "2026-04-14", "2026-04-14", "Evaluation & planning"],
+["Fix Preview Theme - DMI-1065 - 100: These are buttons, but they are not marked up as such; screen readers will not identify them as actionable and they will not be usable by keyboard users.", 0.45, 1, "2025-08-11", "2025-08-11", "Ticket fixes"],
+["DMI-1088 - 110: Decorative SVG elements should be hidden from screen reader users.", 0.45, 2, "2025-09-18", "2025-10-01", "Ticket fixes"],
+["DMI-1827 - FU - 16: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.44, 1, "2025-09-29", "2025-09-29", "Ticket fixes"],
+["[DMI-1135] 181: The breadcrumb links are not properly identified as such for screen reader users.", 0.44, 1, "2025-10-03", "2025-10-03", "Ticket fixes"],
+["[Code review] DMI-1059 Navigation menus that open on hover must be able to triggered by keyboard and screen reader users.", 0.44, 1, "2025-10-14", "2025-10-14", "Code reviews"],
+["DMI-1142 - 184: Decorative SVG elements should be hidden from screen reader users.", 0.4, 1, "2025-09-18", "2025-09-18", "Ticket fixes"],
+["DMI-2302 - FU - 80: Content that does not programmatically follow a logical reading order can be confusing and difficult for screen reader users to understand.", 0.4, 1, "2025-11-07", "2025-11-07", "Ticket fixes"],
+["DMI-3215 - #263: Images that have empty alt attributes are not visible to screen reader users.", 0.38, 1, "2026-04-27", "2026-04-27", "Ticket fixes"],
+["DMI-1141 - 185: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.36, 1, "2025-08-25", "2025-08-25", "Ticket fixes"],
+["DMI-1202 - 44: Decorative SVG elements should be hidden from screen reader users.", 0.36, 1, "2025-12-16", "2025-12-16", "Ticket fixes"],
+["DMI-1208 - 93: This element receives focus in an illogical order for screen reader and keyboard users.", 0.36, 2, "2025-12-23", "2025-12-23", "Ticket fixes"],
+["[DMI-3226] #269: Accessible names of elements should properly match the visible labels.", 0.36, 1, "2026-05-18", "2026-05-18", "Ticket fixes"],
+["Investigating Tangent code", 0.35, 1, "2025-02-14", "2025-02-14", "Tooling & automation"],
+["[Code review] DMI-1169 ADA illogical order focus indicator", 0.35, 1, "2025-09-11", "2025-09-11", "Code reviews"],
+["DMI-1127 - 162: Collapsed navigation menus should not be visible to screen reader users or receive keyboard focus.", 0.35, 1, "2025-09-29", "2025-09-29", "Ticket fixes"],
+["Olaplex Minicart - Translation & ADA", 0.34, 1, "2025-10-31", "2025-10-31", "Ticket fixes"],
+["DMI-1217 - 117: Decorative SVG elements should be hidden from screen reader users.", 0.34, 1, "2025-12-16", "2025-12-16", "Ticket fixes"],
+["Allyant HUB Toolkit - Chrome Extension", 0.32, 1, "2025-12-10", "2025-12-10", "Tooling & automation"],
+["DMI-1117 - removing unnecessary ARIA attributes", 0.3, 1, "2025-09-03", "2025-09-03", "Ticket fixes"],
+["ADA QA with Allyant Extension - Release 1.10.0", 0.3, 1, "2026-02-04", "2026-02-04", "QA & release checks"],
+["[Code review] - [DMI-1091] fix: ADA Navigation Headings", 0.27, 1, "2025-09-18", "2025-09-18", "Code reviews"],
+["DMI-3470 - Update Tangent Files- Hair Quiz 4.0 + removal of Hair Mask Quiz", 0.27, 1, "2026-07-22", "2026-07-22", "Tooling & automation"],
+["DMI-1206 - 96: Decorative SVG elements should be hidden from screen reader users.", 0.26, 1, "2025-12-16", "2025-12-16", "Ticket fixes"],
+["DMI-2756 - FU 69: It may not be clear to screen reader users how to interact with this carousel.", 0.24, 2, "2026-01-26", "2026-01-27", "Ticket fixes"],
+["DMI-1126 - 226: Decorative SVG elements should be hidden from screen reader users.", 0.22, 1, "2025-09-18", "2025-09-18", "Ticket fixes"],
+["DMI-1240 - 149: Decorative SVG elements should be hidden from screen reader users.", 0.22, 1, "2025-12-16", "2025-12-16", "Ticket fixes"],
+["DMI-1184 - 41: Decorative SVG elements should be hidden from screen reader users.", 0.22, 1, "2025-12-16", "2025-12-16", "Ticket fixes"],
+["DMI-1227 - 143: Unnecessary ARIA attributes can cause unexpected behavior for screen reader users.", 0.22, 1, "2026-01-14", "2026-01-14", "Ticket fixes"],
+["[Code review] DMI-1159 - 142: It is difficult for screen reader users to identify when one slide ends and the next begins.", 0.21, 1, "2025-09-10", "2025-09-10", "Code reviews"],
+["ADA P1 and P2s that are unassigned estimations", 0.21, 1, "2025-11-13", "2025-11-13", "Evaluation & planning"],
+["DMI-2320 - #256: Decorative SVG elements should be hidden from screen reader users.", 0.2, 1, "2025-12-26", "2025-12-26", "Ticket fixes"],
+["DMI-1222 - 127: This element receives focus in an illogical order for screen reader and keyboard users.", 0.19, 1, "2026-01-21", "2026-01-21", "Ticket fixes"],
+["ADA Llama QA", 0.18, 1, "2025-10-20", "2025-10-20", "QA & release checks"],
+["OLA ADA Release 1.13.1 - Release and QA", 0.18, 1, "2026-06-09", "2026-06-09", "QA & release checks"],
+["Code review - [DMI-1091] Add dynamic heading levels to mega menu title", 0.16, 1, "2025-10-07", "2025-10-07", "Code reviews"],
+["DMI-3213 - #265: The language of this content is different from the primary language of the document, but this is not indicated to screen reader users.", 0.16, 1, "2026-05-28", "2026-05-28", "Ticket fixes"],
+["DMI-3023 - FU  #248: The primary image, and secondary image which is revealed on hover only, are inaccessible to screen reader users.", 0.15, 1, "2026-02-20", "2026-02-20", "Ticket fixes"],
+["DMI-1843 - FU - 70: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 0.13, 1, "2025-11-04", "2025-11-04", "Ticket fixes"],
+["Investigating Tangent ADA issues", 0.13, 1, "2025-12-03", "2025-12-03", "Tooling & automation"],
+["Circle back with Llama regarding ADA issues", 0.13, 1, "2026-02-12", "2026-02-12", "Ticket fixes"],
+["DMI-1055 - 191: Image links must be properly labeled for screen reader users.", 0.12, 1, "2025-08-05", "2025-08-05", "Ticket fixes"],
+["Shopify ADA P1 Theme Clean Up", 0.12, 1, "2025-09-01", "2025-09-01", "Ticket fixes"],
+["[Code review] DMI-1160 - 140: Content within non-visible slides can receive keyboard focus and is visible to screen reader users at all times.", 0.11, 1, "2025-09-10", "2025-09-10", "Code reviews"],
+["DMI-3214 - #264: The language of this content is different from the primary language of the document, but this is not indicated to screen reader users.", 0.08, 1, "2026-05-28", "2026-05-28", "Ticket fixes"],
+["[Code review] DMI-1162 - 138: It is not clear to screen reader users where the carousel begins or ends.", 0.07, 1, "2025-09-10", "2025-09-10", "Code reviews"],
+["DMI-1213 - 77: <figure> tags are used excessively and unnecessarily on this page, causing a great deal of extra noise for screen reader users.", 0.07, 1, "2025-12-18", "2025-12-18", "Ticket fixes"],
+["DMI-3069 - [Code Review] - 29: There are multiple separate and adjacent links to the same location, creating an unnecessary amount of work for keyboard users.", 0.07, 1, "2026-03-04", "2026-03-04", "Code reviews"],
+["[Code review] DMI-1329 - FU - 33: Image buttons must be properly labeled for screen reader users.", 0.05, 1, "2025-09-10", "2025-09-10", "Code reviews"],
+["DMI-1197 - 58: Decorative SVG elements should be hidden from screen reader users.", 0.04, 1, "2025-12-16", "2025-12-16", "Ticket fixes"]
+];
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${MONTH_NAMES[+m - 1]} ${+d}, ${y}`;
+}
+function fmtPeriod(first, last) {
+  return first === last ? fmtDate(first) : `${fmtDate(first)} to ${fmtDate(last)}`;
+}
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+let activeGroup = 'All';
+function buildGroupChips() {
+  const counts = {};
+  ADA_DETAIL.forEach(r => { counts[r[5]] = (counts[r[5]] || 0) + r[1]; });
+  const names = ['All', ...Object.keys(counts).sort((a, b) => counts[b] - counts[a])];
+  const box = document.getElementById('groupChips');
+  box.innerHTML = names.map(n =>
+    `<button class="chip${n === activeGroup ? ' active' : ''}" data-group="${n}">${n}${n === 'All' ? '' : ` · ${counts[n].toFixed(1)}h`}</button>`
+  ).join('');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    activeGroup = b.dataset.group;
+    buildGroupChips();
+    buildDetail();
+  }));
+}
+
+function buildDetail() {
+  const q = document.getElementById('detailSearch').value.trim().toLowerCase();
+  const rows = ADA_DETAIL.filter(r =>
+    (activeGroup === 'All' || r[5] === activeGroup) &&
+    (!q || r[0].toLowerCase().includes(q) || r[5].toLowerCase().includes(q)));
+  let html = '<tr><th>Task</th><th>Group</th><th>Period</th><th>Entries</th><th>Hours</th></tr>';
+  rows.forEach(r => {
+    html += `<tr><td>${esc(r[0])}</td><td class="period">${r[5]}</td><td class="period">${fmtPeriod(r[3], r[4])}</td>` +
+            `<td class="num">${r[2]}</td><td class="num">${r[1].toFixed(2)}</td></tr>`;
+  });
+  const th = rows.reduce((a, r) => a + r[1], 0);
+  const te = rows.reduce((a, r) => a + r[2], 0);
+  html += `<tr class="total"><td>${rows.length} task${rows.length === 1 ? '' : 's'}</td><td></td><td></td><td class="num">${te}</td><td class="num">${th.toFixed(1)}</td></tr>`;
+  document.getElementById('detailTable').innerHTML = html;
+}
+
+document.getElementById('detailSearch').addEventListener('input', buildDetail);
+
+buildTable();
+buildGroupChips();
+buildDetail();
+render();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+</script>
+</body>
+</html>
