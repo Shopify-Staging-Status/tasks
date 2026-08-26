@@ -187,6 +187,16 @@
   </div>
 
   <div class="card">
+    <h2>Reviewing Domaine's work: code review and QA/UAT</h2>
+    <div class="desc">Time spent verifying code delivered by the Domaine agency under the co-dev model: <b>64.8 hours</b> in the past year, 7.7% of all tracked time. Nearly all of it (63.0h) was logged in 2026 as co-dev ramped up. In the charts above these hours sit inside the Jira Tickets bars (reviews of specific tickets) and the Other Development bars (release reviews and QA rounds).</div>
+    <div class="hl-grid">
+      <div class="hl"><span class="h" style="color:var(--c-jira)">32.6h</span><span class="t"><b>Ticket code reviews.</b> 89 review sessions covering 57 Domaine sprint tickets, including multi-ticket passes of up to 10 tickets and a 40 file review for DMI-1819</span></div>
+      <div class="hl"><span class="h" style="color:var(--c-jira)">17.8h</span><span class="t"><b>Release pull request reviews.</b> Final review of every release branch before it ships, 1.9.0 through 1.15.0 plus hotfixes</span></div>
+      <div class="hl"><span class="h" style="color:var(--c-jira)">14.4h</span><span class="t"><b>Sprint QA and UAT.</b> UAT rounds like 1.16.0, pre and post release QA on all themes, One-Page Checkout QA</span></div>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>What counts as ECOM support</h2>
     <div class="desc">Harvest entries tagged with any of these markers were classified as ECOM support. Test store, metaobjects and Matrixify/Rewind work counts as Development, not ECOM (only price updates stay here), and anything referencing a Jira ticket ID without an ECOM marker went to "Jira tickets". This count is conservative.</div>
     <div class="chips">
@@ -272,15 +282,15 @@
   </div>
 
   <div class="foot">
-    Source: Harvest time report, past 1 year. Classification: entries with ECOM markers (people, documentation, price updates, translations, investigations) → ECOM Support; entries with a Jira ticket ID → Jira Tickets; standups, town halls, trainings and 1:1s → Meetings &amp; Training; everything else (releases, code reviews, QA, test store, metaobjects, Matrixify/Rewind) → Development.
+    Source: Harvest time report, past 1 year. Classification: entries with ECOM markers (people, documentation, price updates, translations, investigations) → ECOM Support. Entries logged against a Jira ticket ID → Jira Tickets, the planned sprint and release work. Standups, town halls, trainings and 1:1s → Meetings &amp; Training. Everything else → Other Development, the engineering work that has no single ticket: release management, code reviews, QA, test store upkeep, metaobjects, Matrixify and Rewind imports. The Domaine review section counts entries whose notes mention code review, QA or UAT, excluding ADA work and internal checks such as the test store, price updates and the Llama app.
   </div>
 </div>
 
 <script>
 const CATS = [
   { key: 'ECOM',        label: 'ECOM Support',        cssVar: '--c-ecom' },
-  { key: 'Jira',        label: 'Jira Tickets',        cssVar: '--c-jira' },
-  { key: 'Development', label: 'Development',         cssVar: '--c-dev'  },
+  { key: 'Jira',        label: 'Jira Tickets (sprint work)', cssVar: '--c-jira' },
+  { key: 'Development', label: 'Other Development',   cssVar: '--c-dev'  },
   { key: 'Meetings',    label: 'Meetings & Training', cssVar: '--c-meet' },
 ];
 const TOTALS = { ECOM: 109.4, Jira: 394.5, Development: 251.0, Meetings: 82.3 };
